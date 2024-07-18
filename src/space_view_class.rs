@@ -1109,7 +1109,7 @@ fn round_ns_to_start_of_day(ns: i64) -> i64 {
 
 fn color_hover(color: Color32, highlight: bool) -> Color32 {
     if highlight {
-        color.lerp_to_gamma(Color32::WHITE, 0.5)
+        color.lerp_to_gamma(Color32::WHITE, 0.2)
     } else {
         color
     }
@@ -1117,7 +1117,7 @@ fn color_hover(color: Color32, highlight: bool) -> Color32 {
 
 fn tcolor_hover(color: Color32, highlight: bool) -> Color32 {
     if highlight {
-        color.gamma_multiply(0.5)
+        color.lerp_to_gamma(Color32::WHITE, 0.2)
     } else {
         color
     }

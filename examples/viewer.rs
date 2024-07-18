@@ -60,7 +60,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         for ((&d, &d_init), &d_normal) in d_path.iter().zip(d_init.iter()).zip(d_normal.iter()) {
             rec.log_static(
-                d,
+                "/",
                 &re_types::archetypes::AnnotationContext {
                     context: re_types::components::AnnotationContext(vec![
                         ClassDescriptionMapElem {
@@ -80,7 +80,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 info: AnnotationInfo {
                                     id: 1,
                                     label: Some("ON".into()),
-                                    color: Some(Rgba32::from_rgb(10, 10, 255)),
+                                    color: None,
                                 },
                                 ..Default::default()
                             },

@@ -4,10 +4,11 @@ use re_sdk::Loggable;
 use re_space_view::{range_with_blueprint_resolved_data, RangeResultsExt};
 use re_types::{
     components::ClassId,
-    datatypes::{TimeRange, Utf8},
+    datatypes::{AnnotationInfo, TimeRange, Utf8},
 };
 use re_viewer_context::{
-    auto_color_for_entity_path, IdentifiedViewSystem, VisualizerQueryInfo, VisualizerSystem,
+    auto_color_egui, auto_color_for_entity_path, IdentifiedViewSystem, VisualizerQueryInfo,
+    VisualizerSystem,
 };
 use std::collections::BTreeMap;
 
@@ -245,27 +246,25 @@ impl WaveformSystem {
                         max_time = max_time.map(|t: i64| t.max(time)).or(Some(time));
 
                         if let Some(DiscreteState(class_id)) = value {
-                            if let Some(Some(annotation_info)) = annotation_map
+                            if let Some(annotation_info) = annotation_map
                                 .get_annotation(&entity_path.clone(), Some(class_id))
-                                .map(|a| a.annotation_info)
+                                .annotation_info
                             {
                                 let label = annotation_info.label.clone().map(Utf8::into);
-                                if let Some(color) = annotation_info.color {
-                                    let kind = if Some(class_id) == discrete_normal {
-                                        DiscreteTransitionKind::Line
-                                    } else {
-                                        DiscreteTransitionKind::Box
-                                    };
+                                let kind = if Some(class_id) == discrete_normal {
+                                    DiscreteTransitionKind::Line
+                                } else {
+                                    DiscreteTransitionKind::Box
+                                };
 
-                                    return Some((
-                                        time,
-                                        DiscreteTransition {
-                                            label,
-                                            color: color.into(),
-                                            kind,
-                                        },
-                                    ));
-                                }
+                                return Some((
+                                    time,
+                                    DiscreteTransition {
+                                        label,
+                                        color: annotation_info_color(&annotation_info),
+                                        kind,
+                                    },
+                                ));
                             }
                         }
                         return None;
@@ -283,22 +282,20 @@ impl WaveformSystem {
                     });
 
                 if let Some(DiscreteStateInit(class_id)) = discrete_init_data {
-                    if let Some(Some(annotation_info)) = annotation_map
+                    if let Some(annotation_info) = annotation_map
                         .get_annotation(&entity_path.clone(), Some(class_id))
-                        .map(|a| a.annotation_info)
+                        .annotation_info
                     {
-                        if let Some(color) = annotation_info.color {
-                            let kind = if Some(class_id) == discrete_normal {
-                                DiscreteTransitionKind::Line
-                            } else {
-                                DiscreteTransitionKind::Box
-                            };
-                            series.discrete_points.init = Some(DiscreteTransition {
-                                label: annotation_info.label.clone().map(Utf8::into),
-                                color: color.into(),
-                                kind,
-                            });
-                        }
+                        let kind = if Some(class_id) == discrete_normal {
+                            DiscreteTransitionKind::Line
+                        } else {
+                            DiscreteTransitionKind::Box
+                        };
+                        series.discrete_points.init = Some(DiscreteTransition {
+                            label: annotation_info.label.clone().map(Utf8::into),
+                            color: annotation_info_color(&annotation_info),
+                            kind,
+                        });
                     }
                 }
             }
@@ -333,23 +330,18 @@ impl WaveformSystem {
                             max_time = max_time.map(|t: i64| t.max(time)).or(Some(time));
 
                             for Event(class_id) in data.iter() {
-                                if let Some(Some(annotation_info)) = annotation_map
+                                if let Some(annotation_info) = annotation_map
                                     .get_annotation(&entity_path.clone(), Some(*class_id))
-                                    .map(|a| a.annotation_info)
+                                    .annotation_info
                                 {
-                                    if let Some(color) = annotation_info.color {
-                                        self.all_events.push(
-                                            time,
-                                            EventMarker {
-                                                entity_path: entity_path.clone(),
-                                                label: annotation_info
-                                                    .label
-                                                    .clone()
-                                                    .map(Utf8::into),
-                                                color: color.into(),
-                                            },
-                                        );
-                                    }
+                                    self.all_events.push(
+                                        time,
+                                        EventMarker {
+                                            entity_path: entity_path.clone(),
+                                            label: annotation_info.label.clone().map(Utf8::into),
+                                            color: annotation_info_color(&annotation_info),
+                                        },
+                                    );
                                 }
                             }
                         }
@@ -382,4 +374,12 @@ impl WaveformSystem {
 
         Ok(())
     }
+}
+
+fn annotation_info_color(annotation_info: &AnnotationInfo) -> egui::Color32 {
+    //This is how backup colors are currently auto assigned
+    annotation_info
+        .color
+        .map(|c| c.into())
+        .unwrap_or_else(|| auto_color_egui(annotation_info.id))
 }

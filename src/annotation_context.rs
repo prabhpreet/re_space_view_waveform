@@ -12,11 +12,11 @@ impl AnnotationWaveformContext {
         &self,
         entity_path: &EntityPath,
         class_id: Option<ClassId>,
-    ) -> Option<ResolvedAnnotationInfo> {
+    ) -> ResolvedAnnotationInfo {
         self.0
-             .0
-            .get(entity_path)
-            .map(|a| a.resolved_class_description(class_id).annotation_info())
+            .find(entity_path)
+            .resolved_class_description(class_id)
+            .annotation_info()
     }
 }
 
